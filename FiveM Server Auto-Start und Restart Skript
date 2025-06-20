@@ -1,0 +1,67 @@
+```powershell
+# FiveM Server Auto-Start und Restart Skript
+
+# Konfigurationseinstellungen
+$ServerPath = "C:\path\to\your\fivem\server"  # Passen Sie den Pfad an Ihren Server an
+$ServerExecutable = "FXServer.exe"
+$RestartInterval = 12  # Restart-Intervall in Stunden
+
+# Funktion zum Senden einer Spieler-Benachrichtigung
+function Send-PlayerNotification {
+    param(
+        [string]$Message
+    )
+    
+    # Hier fügen Sie Ihre Methode zur Spielerbenachrichtigung ein
+    # Beispiel: Senden über Discord-Webhook oder ingame-Nachricht
+    # Ersetzen Sie dies durch Ihre spezifische Benachrichtigungsmethode
+    Invoke-RestMethod -Uri "IHRE_DISCORD_WEBHOOK_URL" -Method Post -Body (@{content = $Message} | ConvertTo-Json) -ContentType "application/json"
+}
+
+# Funktion zum Starten des Servers
+function Start-FiveMServer {
+    Write-Host "Starte FiveM-Server..."
+    Send-PlayerNotification -Message "🔄 Server startet in Kürze. Bitte haben Sie einen Moment Geduld."
+    
+    # Wechsle in den Server-Verzeichnis
+    Set-Location $ServerPath
+    
+    # Starte den Server
+    Start-Process $ServerExecutable
+}
+
+# Funktion zum Stoppen des Servers
+function Stop-FiveMServer {
+    Write-Host "Stoppe FiveM-Server..."
+    Send-PlayerNotification -Message "🛑 Server wird in 2 Minuten heruntergefahren. Bitte speichern Sie Ihre Fortschritte."
+    
+    # Warte 2 Minuten vor dem Stoppen
+    Start-Sleep -Seconds 120
+    
+    # Stoppe alle FiveM-Server-Prozesse
+    Get-Process -Name "FXServer" | Stop-Process -Force
+}
+
+# Hauptskript-Logik
+try {
+    # Server starten
+    Start-FiveMServer
+    
+    # Endlosschleife für periodischen Neustart
+    while ($true) {
+        # Warte für das definierte Intervall
+        Start-Sleep -Seconds ($RestartInterval * 3600)
+        
+        # Stoppe den Server
+        Stop-FiveMServer
+        
+        # Starte den Server neu
+        Start-FiveMServer
+    }
+}
+catch {
+    Write-Error "Ein Fehler ist aufgetreten: $_"
+    Send-PlayerNotification -Message "❌ Serverfehler aufgetreten. Admin wurde benachrichtigt."
+}
+```
+  
